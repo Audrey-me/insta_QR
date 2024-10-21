@@ -1,0 +1,9 @@
+fastapi
+qrcode
+uvicorn
+python-multipart
+boto3
+python-dotenv
+prometheus-fastapi-instrumentator
+qrcode[pil]
+Pillow

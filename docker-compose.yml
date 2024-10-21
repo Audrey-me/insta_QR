@@ -1,0 +1,31 @@
+version: '3.8'
+services:
+  frontend:
+    build: ./frontend
+    ports: 
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+    depends_on:
+      - backend
+    volumes:  # Mount the local directory for hot-reloading
+      - ./frontend:/app
+      - /app/node_modules  # Avoid overwriting node_modules
+
+  backend:
+    build: ./backend
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    environment:
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - AWS_REGION=${AWS_REGION}
+      - S3_BUCKET_NAME=${S3_BUCKET_NAME}
+    volumes:  # Ensure backend is also mounted if you want live updates
+      - ./backend:/app
+
+networks:
+  default:
+    name: instaQR_network
