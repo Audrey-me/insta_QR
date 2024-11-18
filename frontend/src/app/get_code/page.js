@@ -32,7 +32,12 @@ export default function GetCode() {
             </div>
             <div className={styles.input_container}>
                 {qrCode ? (
-                <img src={`data:image/png;base64,${qrCode}`} alt="Generated QR Code" />
+                    <img 
+                    src={`data:image/png;base64,${qrCode}`} 
+                    alt="Generated QR Code" 
+                    style={{ width: '100%', maxWidth: '350px' }} 
+                  />
+                  
                 ) : (
                 <p>No QR Code Available</p>
                 )}

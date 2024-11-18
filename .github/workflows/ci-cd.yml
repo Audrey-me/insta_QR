@@ -1,0 +1,68 @@
+name: ECR Build and Deploy to EKS
+on:
+  push:
+    branches:
+      - main  # Trigger the workflow when changes are pushed to the main branch
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Configure AWS credentials from Secrets
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ secrets.AWS_REGION }}
+        s3-bucket: ${{secrets.S3_BUCKET_NAME}}
+        
+    - name: Login to Amazon ECR
+      run: |
+        aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
+
+    - name: Build and Tag Docker Image for Frontend
+      run: |
+        docker build -t insta-frontend ./frontend
+        docker tag insta-frontend:latest ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/insta-frontend:latest
+
+    - name: Build and Tag Docker Image for Backend
+      run: |
+        docker build -t insta-backend ./backend
+        docker tag insta-backend:latest ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/insta-backend:latest
+
+    - name: Push Frontend Image to ECR
+      run: |
+        docker push ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/insta-frontend:latest
+
+
+    - name: Push Backend Image to ECR
+      run: |
+        docker push ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/insta-backend:latest
+
+    - name: Set up kubeconfig
+      run: |
+        mkdir -p $HOME/.kube
+        echo "${{ secrets.KUBECONFIG }}" | base64 -d > $HOME/.kube/config
+        chmod 600 $HOME/.kube/config  # Set proper permissions
+
+    - name: Update kubeconfig using AWS CLI (Optional, but safer)
+      run: |
+        aws eks update-kubeconfig --region ${{ secrets.AWS_REGION }} --name instaQR-eks-cluster
+
+    - name: Deploy Frontend to EKS
+      run: |
+        kubectl config use-context arn:aws:eks:${{ secrets.AWS_REGION }}:${{ secrets.AWS_ACCOUNT_ID }}:cluster/instaQR-eks-cluster
+        kubectl set image deployment/frontend-deployment frontend-container=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/insta-frontend:latest
+
+    - name: Deploy Backend to EKS
+      run: |
+        kubectl config use-context arn:aws:eks:${{ secrets.AWS_REGION }}:${{ secrets.AWS_ACCOUNT_ID }}:cluster/instaQR-eks-cluster
+        kubectl set image deployment/backend-deployment backend-container=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/insta-backend:latest
+
+    - name: Restart Deployment
+      run: |
+        kubectl rollout restart deployment 

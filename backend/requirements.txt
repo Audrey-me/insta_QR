@@ -7,3 +7,5 @@ python-dotenv
 prometheus-fastapi-instrumentator
 qrcode[pil]
 Pillow
+
+# curl -F "file=/Users/phreetech13/Desktop/python-project/instaQR-practice/backend/trial-img.png" http://localhost:8000/generate-qr-image/

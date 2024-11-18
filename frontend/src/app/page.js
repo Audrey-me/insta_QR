@@ -18,7 +18,7 @@ export default function Home() {
             </div>
 
             <div className={styles.subheading}>
-              {/* <p>Transform your koko, image and URL to a scannable code using our QR Code Generator</p> */}
+              <p>Transform your text, image and URL to a scannable code using our QR Code Generator</p>
             </div>
 
             <div className={styles.flex}>

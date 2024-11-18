@@ -1,0 +1,17 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: backend-servicemonitor
+  labels:
+    release: prometheus
+spec:
+  selector:
+    matchLabels:
+      app: backend
+      monitoring: enabled
+  endpoints:
+  - port: http   # This should match the 'name' in your Service ports
+    path: /metrics
+    interval: 15s
+    scrapeTimeout: 10s
+
